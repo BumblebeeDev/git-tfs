@@ -216,9 +216,12 @@ namespace GitTfs.VsCommon
         {
             var targetVersion = new ChangesetVersionSpec(targetChangeset);
             var searchTo = targetVersion;
-            var mergeInfo = VersionControl.QueryMerges(null, null, path, targetVersion, null, searchTo, RecursionType.Full);
-            if (mergeInfo.Length == 0) return -1;
-            return mergeInfo.Max(x => x.SourceVersion);
+            var mergeInfo = VersionControl.QueryMerges(null, null, path, targetVersion, null, searchTo, RecursionType.Full)
+                .Where(x => x.TargetChangeset.ChangesetId == targetChangeset)
+                .OrderByDescending(x => x.SourceVersion)
+                .FirstOrDefault();
+            if (mergeInfo == null) return -1;
+            return mergeInfo.SourceVersion;
         }
 
         public bool Is2008OrOlder
@@ -316,8 +319,9 @@ namespace GitTfs.VsCommon
                     {
                         var changesetsToRetrieve = batchNumber * batchSize;
 
+                        var lastChangesetVersion = lastChangesetIdToCheck == int.MaxValue ? null : new ChangesetVersionSpec(lastChangesetIdToCheck);
                         var changesetEnumerable = VersionControl.QueryHistory(tfsPathBranchToCreate, VersionSpec.Latest, 0,
-                            RecursionType.Full, null, null, null, changesetsToRetrieve, false, false, false, true).Cast<Changeset>();
+                            RecursionType.Full, null, null, lastChangesetVersion, changesetsToRetrieve, false, false, false, true).Cast<Changeset>();
 
                         if (batchNumber > 1)
                         {
