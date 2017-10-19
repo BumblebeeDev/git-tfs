@@ -95,12 +95,23 @@ namespace GitTfs.Commands
             }
             tfsBranchPath.AssertValidTfsPath();
 
-            var allRemotes = _globals.Repository.ReadAllTfsRemotes();
-            var remote = allRemotes.FirstOrDefault(r => r.TfsRepositoryPath.ToLower() == tfsBranchPath.ToLower());
+            IFetchResult fetchResult;
+            var allRemotes = _globals.Repository.ReadAllTfsRemotes().ToList();
+            var remote = allRemotes.FirstOrDefault(r => String.Equals(r.TfsRepositoryPath, tfsBranchPath, StringComparison.OrdinalIgnoreCase));
             if (remote != null && remote.MaxChangesetId != 0)
             {
-                Trace.TraceInformation("warning : There is already a remote for this tfs branch. Branch ignored!");
-                return GitTfsExitCodes.InvalidArguments;
+                Trace.WriteLine("Fetching remote: " + remote.Id);
+                fetchResult = FetchRemote(remote, true, forceRefUpdate: true);
+                if (fetchResult.NewChangesetCount != 0)
+                {
+                    Trace.TraceInformation("Existing branch: fetched new changes.");
+                    _globals.Repository.GarbageCollect();
+                }
+                else
+                {
+                    Trace.TraceInformation("Existing branch: no new changes found.");
+                }
+                return GitTfsExitCodes.OK;
             }
 
             IList<RootBranch> creationBranchData;
@@ -115,7 +126,6 @@ namespace GitTfs.Commands
                 creationBranchData = defaultRemote.Tfs.GetRootChangesetForBranch(tfsBranchPath, -1, tfsRepositoryPathParentBranchFound.TfsRepositoryPath);
             }
 
-            IFetchResult fetchResult;
             InitBranchSupportingRename(tfsBranchPath, gitBranchNameExpected, creationBranchData, defaultRemote, out fetchResult);
             return GitTfsExitCodes.OK;
         }
@@ -137,7 +147,7 @@ namespace GitTfs.Commands
                 Trace.WriteLine("Processing " + (rootBranch.IsRenamedBranch ? "renamed " : string.Empty) + "branch: "
                     + rootBranch.TfsBranchPath + " (" + rootBranch.SourceBranchChangesetId + ")");
                 var cbd = new BranchCreationDatas() { RootChangesetId = rootBranch.SourceBranchChangesetId, TfsRepositoryPath = rootBranch.TfsBranchPath };
-                if (cbd.TfsRepositoryPath == tfsBranchPath)
+                if (string.Equals(cbd.TfsRepositoryPath, tfsBranchPath, StringComparison.OrdinalIgnoreCase))
                     cbd.GitBranchNameExpected = gitBranchNameExpected;
 
                 branchTfsRemote = defaultRemote.InitBranch(_remoteOptions, cbd.TfsRepositoryPath, cbd.RootChangesetId, !NoFetch, cbd.GitBranchNameExpected, fetchResult);
@@ -409,8 +419,9 @@ namespace GitTfs.Commands
         /// </param>
         /// <param name="renameResult"></param>
         /// <param name="startingChangesetId"></param>
+        /// <param name="forceRefUpdate">Force local branch update with the new commit hash if it exists</param>
         /// <returns>A <see cref="IFetchResult"/>.</returns>
-        private IFetchResult FetchRemote(IGitTfsRemote tfsRemote, bool stopOnFailMergeCommit, bool createBranch = true, IRenameResult renameResult = null, int startingChangesetId = -1)
+        private IFetchResult FetchRemote(IGitTfsRemote tfsRemote, bool stopOnFailMergeCommit, bool createBranch = true, IRenameResult renameResult = null, int startingChangesetId = -1, bool forceRefUpdate = false)
         {
             try
             {
@@ -431,7 +442,13 @@ namespace GitTfs.Commands
                     }
                     else
                     {
-                        Trace.TraceInformation("info: local branch ref already exists!");
+                        if (forceRefUpdate)
+                        {
+                            _globals.Repository.UpdateRef(branchRef, tfsRemote.MaxCommitHash);
+                            Trace.WriteLine("Local branch updated!");
+                        }
+                        else
+                            Trace.TraceInformation("info: local branch ref already exists!");
                     }
                 }
                 return fetchResult;
