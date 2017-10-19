@@ -359,6 +359,8 @@ namespace GitTfs.Core
                 foreach (var changeset in fetchedChangesets)
                 {
                     fetchRetrievedChangesets = true;
+                    if (changeset.Summary.ChangesetId <= MaxChangesetId)
+                        continue;
 
                     fetchResult.NewChangesetCount++;
                     if (lastChangesetIdToFetch > 0 && changeset.Summary.ChangesetId > lastChangesetIdToFetch)

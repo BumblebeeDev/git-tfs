@@ -185,11 +185,13 @@ namespace GitTfs.Commands
 
             try
             {
-                if (InitialChangeset.HasValue)
+                var initialChangeset = InitialChangeset;
+                if (initialChangeset.HasValue)
                 {
-                    _properties.InitialChangeset = InitialChangeset.Value;
+                    _properties.InitialChangeset = initialChangeset.Value;
                     _properties.PersistAllOverrides();
-                    remote.QuickFetch(InitialChangeset.Value);
+                    if (initialChangeset.Value > remote.MaxChangesetId)
+                        remote.QuickFetch(initialChangeset.Value);
                     remote.Fetch(stopOnFailMergeCommit, upToChangeSet);
                 }
                 else
