@@ -991,7 +991,7 @@ namespace GitTfs.Core
 
         private IGitTfsRemote InitTfsBranch(RemoteOptions remoteOptions, string tfsRepositoryPath, int rootChangesetId = -1, bool fetchParentBranch = false, string gitBranchNameExpected = null, IRenameResult renameResult = null)
         {
-            Trace.WriteLine("Begin process of creating branch for remote :" + tfsRepositoryPath);
+            Trace.WriteLine("Begin process of creating branch for remote: " + tfsRepositoryPath);
             // TFS string representations of repository paths do not end in trailing slashes
             tfsRepositoryPath = (tfsRepositoryPath ?? string.Empty).TrimEnd('/');
 
@@ -999,7 +999,7 @@ namespace GitTfs.Core
                 string.IsNullOrWhiteSpace(gitBranchNameExpected) ? tfsRepositoryPath : gitBranchNameExpected);
             if (string.IsNullOrWhiteSpace(gitBranchName))
                 throw new GitTfsException("error: The Git branch name '" + gitBranchName + "' is not valid...\n");
-            Trace.WriteLine("Git local branch will be :" + gitBranchName);
+            Trace.WriteLine("Git local branch will be: " + gitBranchName);
 
             string sha1RootCommit = null;
             if (rootChangesetId != -1)
@@ -1010,7 +1010,7 @@ namespace GitTfs.Core
                 if (string.IsNullOrWhiteSpace(sha1RootCommit))
                     return null;
 
-                Trace.WriteLine("Found commit " + sha1RootCommit + " for changeset :" + rootChangesetId);
+                Trace.WriteLine("Found commit " + sha1RootCommit + " for changeset: " + rootChangesetId);
             }
 
             IGitTfsRemote tfsRemote;

@@ -96,11 +96,11 @@ namespace GitTfs
             }
             catch (Exception ex)
             {
-                Trace.WriteLine("Error when parsing author file:" + ex);
+                Trace.WriteLine("Error when parsing author file: " + ex);
                 if (!string.IsNullOrEmpty(_globals.AuthorsFilePath))
                     throw;
-                Trace.TraceWarning("warning: author file ignored due to a problem occuring when reading it :\n\t" + ex.Message);
-                Trace.TraceWarning("         Verify the file :" + Path.Combine(_globals.GitDir, AuthorsFile.GitTfsCachedAuthorsFileName));
+                Trace.TraceWarning("warning: author file ignored due to a problem occuring when reading it:\n\t" + ex.Message);
+                Trace.TraceWarning("         Verify the file: " + Path.Combine(_globals.GitDir, AuthorsFile.GitTfsCachedAuthorsFileName));
             }
         }
 

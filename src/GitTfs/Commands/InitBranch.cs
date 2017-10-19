@@ -126,7 +126,7 @@ namespace GitTfs.Commands
 
             RemoveAlreadyFetchedBranches(creationBranchData, defaultRemote);
 
-            Trace.TraceInformation("Branches to Initialize successively :");
+            Trace.TraceInformation("Branches to Initialize successively: ");
             foreach (var branch in creationBranchData)
                 Trace.TraceInformation("-" + branch.TfsBranchPath + " (" + branch.SourceBranchChangesetId + ")");
 
@@ -134,7 +134,7 @@ namespace GitTfs.Commands
             var remoteToDelete = new List<IGitTfsRemote>();
             foreach (var rootBranch in creationBranchData)
             {
-                Trace.WriteLine("Processing " + (rootBranch.IsRenamedBranch ? "renamed " : string.Empty) + "branch :"
+                Trace.WriteLine("Processing " + (rootBranch.IsRenamedBranch ? "renamed " : string.Empty) + "branch: "
                     + rootBranch.TfsBranchPath + " (" + rootBranch.SourceBranchChangesetId + ")");
                 var cbd = new BranchCreationDatas() { RootChangesetId = rootBranch.SourceBranchChangesetId, TfsRepositoryPath = rootBranch.TfsBranchPath };
                 if (cbd.TfsRepositoryPath == tfsBranchPath)
@@ -318,7 +318,7 @@ namespace GitTfs.Commands
                         try
                         {
                             var lastFetchedChangesetId = tfsBranch.TfsRemote.MaxChangesetId;
-                            Trace.WriteLine("Fetching remote :" + tfsBranch.TfsRemote.Id);
+                            Trace.WriteLine("Fetching remote: " + tfsBranch.TfsRemote.Id);
                             var fetchResult = FetchRemote(tfsBranch.TfsRemote, true);
                             tfsBranch.IsEntirelyFetched = fetchResult.IsSuccess;
                             if (fetchResult.NewChangesetCount != 0)
