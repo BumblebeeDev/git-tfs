@@ -699,16 +699,16 @@ namespace GitTfs.Core
         public void QuickFetch()
         {
             var changeset = GetLatestChangeset();
-            quickFetch(changeset);
+            QuickFetch(changeset);
         }
 
         public void QuickFetch(int changesetId)
         {
             var changeset = Tfs.GetChangeset(changesetId, this);
-            quickFetch(changeset);
+            QuickFetch(changeset);
         }
 
-        private void quickFetch(ITfsChangeset changeset)
+        private void QuickFetch(ITfsChangeset changeset)
         {
             var log = CopyTree(MaxCommitHash, changeset);
             UpdateTfsHead(Commit(log), changeset.Summary.ChangesetId);
