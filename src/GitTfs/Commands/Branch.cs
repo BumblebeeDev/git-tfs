@@ -199,7 +199,7 @@ namespace GitTfs.Commands
                 checkInCurrentBranch = true;
                 var parents = _globals.Repository.GetLastParentTfsCommits(_globals.Repository.GetCurrentCommit());
                 if (!parents.Any())
-                    throw new GitTfsException("error : no tfs remote parent found!");
+                    throw new GitTfsException("error: no tfs remote parent found!");
                 commit = parents.First();
             }
             var remote = commit.Remote;

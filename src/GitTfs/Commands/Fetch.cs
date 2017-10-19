@@ -169,7 +169,7 @@ namespace GitTfs.Commands
                 remote.Repository.HasRef(GitRepository.ShortToLocalName(bareBranch)) &&
                 remote.MaxCommitHash != remote.Repository.GetCommit(bareBranch).Sha)
             {
-                throw new GitTfsException("error : fetch is not allowed when there is ahead commits!",
+                throw new GitTfsException("error: fetch is not allowed when there is ahead commits!",
                     new[] { "Remove ahead commits and retry", "use the --force option (ahead commits will be lost!)" });
             }
 
