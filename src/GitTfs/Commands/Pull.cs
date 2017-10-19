@@ -1,4 +1,6 @@
+using System;
 using System.ComponentModel;
+using System.Linq;
 using NDesk.Options;
 using GitTfs.Core;
 using StructureMap;
@@ -40,7 +42,21 @@ namespace GitTfs.Commands
 
             if (retVal == 0)
             {
-                var remote = _globals.Repository.ReadTfsRemote(remoteId);
+                // TFS representations of repository paths do not have trailing slashes
+                var tfsBranchPath = (remoteId ?? string.Empty).TrimEnd('/');
+
+                if (!tfsBranchPath.IsValidTfsPath())
+                {
+                    var remotes = _globals.Repository.GetLastParentTfsCommits(tfsBranchPath);
+                    if (!remotes.Any())
+                    {
+                        throw new Exception("error: TFS branch not found: " + remoteId);
+                    }
+                    tfsBranchPath = remotes.First().Remote.TfsRepositoryPath;
+                }
+
+                var allRemotes = _globals.Repository.ReadAllTfsRemotes();
+                var remote = allRemotes.FirstOrDefault(r => String.Equals(r.TfsRepositoryPath, tfsBranchPath, StringComparison.OrdinalIgnoreCase));
                 if (_shouldRebase)
                 {
                     _globals.WarnOnGitVersion();
