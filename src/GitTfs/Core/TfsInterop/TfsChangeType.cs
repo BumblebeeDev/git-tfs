@@ -14,6 +14,7 @@ namespace GitTfs.Core.TfsInterop
         Delete = 0x0020,
         Undelete = 0x0040,
         Content = 0x007F, // Rollup of the preceding change types
+        SourceRename = 0x0800,
 
         Branch = 0x0080,
         Merge = 0x0100,
