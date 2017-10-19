@@ -403,7 +403,7 @@ namespace GitTfs.Core
 
         public IDictionary<string, GitObject> CreateObjectsDictionary()
         {
-            return new Dictionary<string, GitObject>(StringComparer.InvariantCultureIgnoreCase);
+            return new Dictionary<string, GitObject>(StringComparer.Ordinal);
         }
 
         public IDictionary<string, GitObject> GetObjects(string commit, IDictionary<string, GitObject> entries)

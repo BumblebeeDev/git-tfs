@@ -27,7 +27,7 @@ namespace GitTfs.Core
         {
             _workspace = workspace;
             _getInitialTfsTree = getInitialTfsTree;
-            _fileOperations = new Dictionary<string, FileOperation>(StringComparer.InvariantCultureIgnoreCase);
+            _fileOperations = new Dictionary<string, FileOperation>(StringComparer.Ordinal);
         }
 
         public void Dispose()
@@ -49,7 +49,7 @@ namespace GitTfs.Core
             }
 
             var deletedDirs = new List<string>();
-            foreach (var dir in candidateDirectories.OrderBy(d => d, StringComparer.InvariantCultureIgnoreCase))
+            foreach (var dir in candidateDirectories.OrderBy(d => d, StringComparer.Ordinal))
             {
                 DeleteEmptyDir(dir, deletedDirs);
             }
@@ -132,8 +132,8 @@ namespace GitTfs.Core
 
         private IEnumerable<string> CalculateCandidateDirectories()
         {
-            var directoriesWithRemovedFiles = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
-            var directoriesBlockedForRemoval = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+            var directoriesWithRemovedFiles = new HashSet<string>(StringComparer.Ordinal);
+            var directoriesBlockedForRemoval = new HashSet<string>(StringComparer.Ordinal);
 
             foreach (var fileAndOperation in _fileOperations)
             {

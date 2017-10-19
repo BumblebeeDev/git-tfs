@@ -38,7 +38,7 @@ namespace GitTfs.Test.Core
             private Dictionary<string, GitObject> _initialTree;
             public virtual Dictionary<string, GitObject> InitialTree
             {
-                get { return _initialTree ?? (_initialTree = new Dictionary<string, GitObject>(StringComparer.InvariantCultureIgnoreCase)); }
+                get { return _initialTree ?? (_initialTree = new Dictionary<string, GitObject>(StringComparer.Ordinal)); }
             }
 
             private FakeChangeset _changeset;

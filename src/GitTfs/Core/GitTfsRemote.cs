@@ -416,7 +416,7 @@ namespace GitTfs.Core
 
         private Dictionary<string, GitObject> BuildEntryDictionary()
         {
-            return new Dictionary<string, GitObject>(StringComparer.InvariantCultureIgnoreCase);
+            return new Dictionary<string, GitObject>(StringComparer.Ordinal);
         }
 
         private bool ProcessMergeOrBranchChangeset(ITfsChangeset changeset, bool stopOnFailMergeCommit, bool isMerge, ref string parentCommit)
