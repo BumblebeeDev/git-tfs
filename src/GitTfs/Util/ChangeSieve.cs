@@ -125,7 +125,7 @@ namespace GitTfs.Util
         }
 
         private bool? _deletesProject;
-        private bool DeletesProject
+        public bool DeletesProject
         {
             get
             {

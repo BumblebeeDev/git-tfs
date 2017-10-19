@@ -35,6 +35,10 @@ namespace GitTfs.Core
             {
                 IsRenameChangeset = true;
             }
+            if (sieve.DeletesProject)
+            {
+                IsDeleteProjectChangeset = true;
+            }
             _changeset.Get(workspace, sieve.GetChangesToFetch(), ignorableErrorHandler);
             var forceGetChanges = lastCommit == null;
             foreach (var change in sieve.GetChangesToApply(forceGetChanges))
@@ -87,6 +91,16 @@ namespace GitTfs.Core
                 if (_changeset == null || _changeset.Changes == null || !_changeset.Changes.Any())
                     return false;
                 return _changeset.Changes.Any(c => c.ChangeType.IncludesOneOf(TfsChangeType.Merge));
+            }
+        }
+
+        public bool IsBranchChangeset
+        {
+            get
+            {
+                if (_changeset == null || _changeset.Changes == null || !_changeset.Changes.Any())
+                    return false;
+                return _changeset.Changes.Any(c => c.ChangeType == TfsChangeType.Branch);
             }
         }
 
@@ -233,5 +247,6 @@ namespace GitTfs.Core
 
         public string OmittedParentBranch { get; set; }
         public bool IsRenameChangeset { get; set; }
+        public bool IsDeleteProjectChangeset { get; set; }
     }
 }

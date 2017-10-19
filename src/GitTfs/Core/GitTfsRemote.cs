@@ -366,16 +366,22 @@ namespace GitTfs.Core
                     if (lastChangesetIdToFetch > 0 && changeset.Summary.ChangesetId > lastChangesetIdToFetch)
                         return fetchResult;
                     string parentCommitSha = null;
-                    if (changeset.IsMergeChangeset && !ProcessMergeChangeset(changeset, stopOnFailMergeCommit, ref parentCommitSha))
+                    if (changeset.IsMergeChangeset && !ProcessMergeOrBranchChangeset(changeset, stopOnFailMergeCommit, true, ref parentCommitSha))
                     {
                         fetchResult.NewChangesetCount--; // Merge wasn't successful - so don't count the changeset we found
                         fetchResult.IsSuccess = false;
                         return fetchResult;
                     }
                     var parentSha = (renameResult != null && renameResult.IsProcessingRenameChangeset) ? renameResult.LastParentCommitBeforeRename : MaxCommitHash;
+                    if (changeset.IsBranchChangeset && !ProcessMergeOrBranchChangeset(changeset, stopOnFailMergeCommit, false, ref parentSha))
+                    {
+                        fetchResult.NewChangesetCount--; // Branch wasn't successful - so don't count the changeset we found
+                        fetchResult.IsSuccess = false;
+                        return fetchResult;
+                    }
                     var isFirstCommitInRepository = (parentSha == null);
                     var log = Apply(parentSha, changeset, objects);
-                    if (changeset.IsRenameChangeset && !isFirstCommitInRepository)
+                    if (changeset.IsRenameChangeset && !changeset.IsDeleteProjectChangeset && !isFirstCommitInRepository)
                     {
                         if (renameResult == null || !renameResult.IsProcessingRenameChangeset)
                         {
@@ -413,24 +419,25 @@ namespace GitTfs.Core
             return new Dictionary<string, GitObject>(StringComparer.InvariantCultureIgnoreCase);
         }
 
-        private bool ProcessMergeChangeset(ITfsChangeset changeset, bool stopOnFailMergeCommit, ref string parentCommit)
+        private bool ProcessMergeOrBranchChangeset(ITfsChangeset changeset, bool stopOnFailMergeCommit, bool isMerge, ref string parentCommit)
         {
+            var changesetType = isMerge ? "merge" : "branch";
             if (!Tfs.CanGetBranchInformation)
             {
                 Trace.TraceInformation("info: this changeset " + changeset.Summary.ChangesetId +
-                                 " is a merge changeset. But was not treated as is because this version of TFS can't manage branches...");
+                                 string.Format(" is a {0} changeset. But was not treated as is because this version of TFS can't manage branches...", changesetType));
             }
             else if (!IsIgnoringBranches())
             {
                 var parentChangesetId = Tfs.FindMergeChangesetParent(TfsRepositoryPath, changeset.Summary.ChangesetId, this);
-                if (parentChangesetId < 1)  // Handle missing merge parent info
+                if (parentChangesetId < 1)  // Handle missing merge/branch parent info
                 {
                     if (stopOnFailMergeCommit)
                     {
                         return false;
                     }
                     Trace.TraceInformation("warning: this changeset " + changeset.Summary.ChangesetId +
-                                     " is a merge changeset. But git-tfs is unable to determine the parent changeset.");
+                                     string.Format(" is a {0} changeset. But git-tfs is unable to determine the parent changeset.", changesetType));
                     return true;
                 }
                 var shaParent = Repository.FindCommitHashByChangesetId(parentChangesetId);
@@ -450,14 +457,14 @@ namespace GitTfs.Core
                         return false;
 
                     Trace.TraceInformation("warning: this changeset " + changeset.Summary.ChangesetId +
-                                     " is a merge changeset. But git-tfs failed to find and fetch the parent changeset "
+                                     string.Format(" is a {0} changeset. But git-tfs failed to find and fetch the parent changeset ", changesetType)
                                      + parentChangesetId + ". Parent changeset will be ignored...");
                 }
             }
             else
             {
                 Trace.TraceInformation("info: this changeset " + changeset.Summary.ChangesetId +
-                                 " is a merge changeset. But was not treated as is because of your git setting...");
+                                 string.Format(" is a {0} changeset. But was not treated as is because of your git setting...", changesetType));
                 changeset.OmittedParentBranch = ";C" + changeset.Summary.ChangesetId;
             }
             return true;

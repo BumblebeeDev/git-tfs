@@ -26,10 +26,23 @@ namespace GitTfs.Core
         bool IsMergeChangeset { get; }
 
         /// <summary>
+        /// Get if this changeset is a branch changeset
+        /// </summary>
+        bool IsBranchChangeset { get; }
+
+        /// <summary>
         /// Get parent that not was fetched
         /// </summary>
         string OmittedParentBranch { get; set; }
 
+        /// <summary>
+        /// Get if this changeset is a renaming changeset
+        /// </summary>
         bool IsRenameChangeset { get; set; }
+
+        /// <summary>
+        /// Get if this changeset is a branch delete changeset
+        /// </summary>
+        bool IsDeleteProjectChangeset { get; set; }
     }
 }
