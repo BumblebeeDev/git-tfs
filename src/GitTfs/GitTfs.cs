@@ -43,7 +43,9 @@ namespace GitTfs
             Trace.WriteLine("Command run:" + _globals.CommandLineRun);
             if (RequiresValidGitRepository(command)) AssertValidGitRepository();
             ParseAuthors();
-            return Main(command, unparsedArgs);
+            var result = Main(command, unparsedArgs);
+            CopyAuthors();
+            return result;
         }
 
         private void UpdateLoggerOnDebugging()
@@ -101,6 +103,22 @@ namespace GitTfs
                     throw;
                 Trace.TraceWarning("warning: author file ignored due to a problem occuring when reading it:\n\t" + ex.Message);
                 Trace.TraceWarning("         Verify the file: " + Path.Combine(_globals.GitDir, AuthorsFile.GitTfsCachedAuthorsFileName));
+            }
+        }
+
+        private void CopyAuthors()
+        {
+            try
+            {
+                _container.GetInstance<AuthorsFile>().CopyAuthors(_globals.AuthorsFilePath, _globals.GitDir);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Error when copying author file: " + ex);
+                if (!string.IsNullOrEmpty(_globals.AuthorsFilePath))
+                    throw;
+                Trace.TraceWarning("warning: author file was not copied into Git directory due to a problem:\n\t" + ex.Message);
+                Trace.TraceWarning("         Copy the file manually to: " + Path.Combine(_globals.GitDir, AuthorsFile.GitTfsCachedAuthorsFileName));
             }
         }
 
