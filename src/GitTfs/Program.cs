@@ -21,6 +21,7 @@ namespace GitTfs
         [STAThreadAttribute]
         public static void Main(string[] args)
         {
+            var startTime = DateTime.Now;
             try
             {
                 Environment.ExitCode = MainCore(args);
@@ -30,6 +31,13 @@ namespace GitTfs
                 ReportException(e);
                 Environment.ExitCode = GitTfsExitCodes.ExceptionThrown;
             }
+            Trace.TraceInformation("Time " + (DateTime.Now - startTime).ToString(""));
+#if DEBUG
+            while (Console.KeyAvailable)
+                Console.ReadKey();
+            Console.WriteLine("Press any key...");
+            Console.ReadKey();
+#endif
         }
 
         public static int MainCore(string[] args)
