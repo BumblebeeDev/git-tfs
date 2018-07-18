@@ -20,6 +20,8 @@ namespace GitTfs.Commands
                         v => Username = v },
                     { "p|password=", "TFS password",
                         v => Password = v },
+                    { "cut-path=", "Cut from the start of the TFS path",
+                        v => CutPath = v },
                 };
             }
         }
@@ -28,5 +30,6 @@ namespace GitTfs.Commands
         public string ExceptRegex { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
+        public string CutPath { get; set; }
     }
 }

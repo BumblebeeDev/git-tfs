@@ -13,14 +13,16 @@ namespace GitTfs.Core
         private readonly ITfsHelper _tfs;
         private readonly IChangeset _changeset;
         private readonly AuthorsFile _authors;
+        private readonly string _cutPath;
         public TfsChangesetInfo Summary { get; set; }
         public int BaseChangesetId { get; set; }
 
-        public TfsChangeset(ITfsHelper tfs, IChangeset changeset, AuthorsFile authors)
+        public TfsChangeset(ITfsHelper tfs, IChangeset changeset, AuthorsFile authors, string cutPath)
         {
             _tfs = tfs;
             _changeset = changeset;
             _authors = authors;
+            _cutPath = cutPath;
             BaseChangesetId = _changeset.Changes.Max(c => c.Item.ChangesetId) - 1;
         }
 
@@ -29,7 +31,7 @@ namespace GitTfs.Core
             if (initialTree.Empty())
                 Summary.Remote.Repository.GetObjects(lastCommit, initialTree);
             var remoteRelativeLocalPath = GetPathRelativeToWorkspaceLocalPath(workspace);
-            var resolver = new PathResolver(Summary.Remote, remoteRelativeLocalPath, initialTree);
+            var resolver = new PathResolver(Summary.Remote, _cutPath, remoteRelativeLocalPath, initialTree);
             var sieve = new ChangeSieve(_changeset, resolver);
             if (sieve.RenameBranchCommmit)
             {
@@ -68,14 +70,29 @@ namespace GitTfs.Core
 
         private void Update(ApplicableChange change, IGitTreeModifier treeBuilder, ITfsWorkspace workspace, IDictionary<string, GitObject> initialTree)
         {
-            var localPath = workspace.GetLocalPath(change.GitPath);
+            // Assume we cut path at the start, so add it back
+            var tfsPath = change.GitPath;
+            if (!string.IsNullOrEmpty(_cutPath))
+                tfsPath = _cutPath + "/" + tfsPath;
+
+            var localPath = workspace.GetLocalPath(tfsPath);
             if (File.Exists(localPath))
             {
                 treeBuilder.Add(change.GitPath, localPath, change.Mode);
             }
             else
             {
-                Trace.TraceInformation("Cannot checkout file '{0}' from TFS. Skip it", change.GitPath);
+                // Fallback to supplied path
+                tfsPath = change.GitPath;
+                localPath = workspace.GetLocalPath(tfsPath);
+                if (File.Exists(localPath))
+                {
+                    treeBuilder.Add(change.GitPath, localPath, change.Mode);
+                }
+                else
+                {
+                    Trace.TraceInformation("Cannot checkout file '{0}' from TFS. Skip it", tfsPath);
+                }
             }
         }
 
@@ -107,7 +124,7 @@ namespace GitTfs.Core
         public IEnumerable<TfsTreeEntry> GetFullTree()
         {
             var treeInfo = Summary.Remote.Repository.CreateObjectsDictionary();
-            var resolver = new PathResolver(Summary.Remote, "", treeInfo);
+            var resolver = new PathResolver(Summary.Remote, _cutPath, "", treeInfo);
 
             IItem[] tfsItems;
             if (Summary.Remote.TfsRepositoryPath != null)
@@ -137,7 +154,12 @@ namespace GitTfs.Core
                 workspace.Get(_changeset.ChangesetId);
                 foreach (var entry in tfsTreeEntries)
                 {
-                    Add(entry.Item, entry.FullName, treeBuilder, workspace);
+                    var tfsPath = entry.FullName;
+                    if (!string.IsNullOrEmpty(Summary.Remote.TfsRepositoryPath) && entry.Item.ServerItem.StartsWith(Summary.Remote.TfsRepositoryPath))
+                        tfsPath = entry.Item.ServerItem.Substring(Summary.Remote.TfsRepositoryPath.Length);
+                    while (tfsPath.StartsWith("/"))
+                        tfsPath = tfsPath.Substring(1);
+                    Add(entry.Item, entry.FullName, tfsPath, treeBuilder, workspace);
                     maxChangesetId = Math.Max(maxChangesetId, entry.Item.ChangesetId);
 
                     itemsCopied++;
@@ -151,11 +173,11 @@ namespace GitTfs.Core
             return MakeNewLogEntry(maxChangesetId == _changeset.ChangesetId ? _changeset : _tfs.GetChangeset(maxChangesetId));
         }
 
-        private void Add(IItem item, string pathInGitRepo, IGitTreeModifier treeBuilder, ITfsWorkspace workspace)
+        private void Add(IItem item, string pathInGitRepo, string pathInTfsWorkspace, IGitTreeModifier treeBuilder, ITfsWorkspace workspace)
         {
             if (item.DeletionId == 0)
             {
-                treeBuilder.Add(pathInGitRepo, workspace.GetLocalPath(pathInGitRepo), LibGit2Sharp.Mode.NonExecutableFile);
+                treeBuilder.Add(pathInGitRepo, workspace.GetLocalPath(pathInTfsWorkspace), LibGit2Sharp.Mode.NonExecutableFile);
             }
         }
 

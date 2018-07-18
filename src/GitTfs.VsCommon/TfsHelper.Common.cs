@@ -29,11 +29,13 @@ namespace GitTfs.VsCommon
         private readonly IContainer _container;
         protected TfsTeamProjectCollection _server;
         private static bool _resolverInstalled;
+        private static string _cutPath;
 
         public TfsHelperBase(TfsApiBridge bridge, IContainer container)
         {
             _bridge = bridge;
             _container = container;
+            _cutPath = container.GetInstance<RemoteOptions>().CutPath;
             if (!_resolverInstalled)
             {
                 AppDomain.CurrentDomain.AssemblyResolve += LoadFromVsFolder;
@@ -612,7 +614,10 @@ namespace GitTfs.VsCommon
 
         protected ITfsChangeset BuildTfsChangeset(Changeset changeset, IGitTfsRemote remote)
         {
-            var tfsChangeset = _container.With<ITfsHelper>(this).With<IChangeset>(_bridge.Wrap<WrapperForChangeset, Changeset>(changeset)).GetInstance<TfsChangeset>();
+            var tfsChangeset = _container.With<ITfsHelper>(this)
+                .With<IChangeset>(_bridge.Wrap<WrapperForChangeset, Changeset>(changeset))
+                .With("cutPath").EqualTo(_cutPath)
+                .GetInstance<TfsChangeset>();
             tfsChangeset.Summary = new TfsChangesetInfo { ChangesetId = changeset.ChangesetId, Remote = remote };
 
             if (HasWorkItems(changeset))
@@ -868,7 +873,7 @@ namespace GitTfs.VsCommon
                 _bridge.Wrap<WrapperForVersionControlServer, VersionControlServer>(VersionControl);
             // TODO - containerify this (no `new`)!
             var fakeChangeset = new Unshelveable(shelveset, change, wrapperForVersionControlServer, _bridge);
-            var tfsChangeset = new TfsChangeset(remote.Tfs, fakeChangeset, null) { Summary = new TfsChangesetInfo { Remote = remote } };
+            var tfsChangeset = new TfsChangeset(remote.Tfs, fakeChangeset, null, _cutPath) { Summary = new TfsChangesetInfo { Remote = remote } };
             return tfsChangeset;
         }
 
