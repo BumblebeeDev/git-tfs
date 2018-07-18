@@ -425,7 +425,10 @@ namespace GitTfs.Core
         {
             if (commit == null)
             {
-                return new GitTreeBuilder(_repository.ObjectDatabase);
+                var treeBuilder = new GitTreeBuilder(_repository.ObjectDatabase);
+                if (!string.IsNullOrEmpty(_pathToGitIgnoreFile))
+                    treeBuilder.Add(".gitignore", _pathToGitIgnoreFile, LibGit2Sharp.Mode.NonExecutableFile);
+                return treeBuilder;
             }
             else
             {
@@ -722,12 +725,15 @@ namespace GitTfs.Core
             return _repository.Ignore.IsPathIgnored(relativePath);
         }
 
+        private string _pathToGitIgnoreFile;
+
         public string CommitGitIgnore(string pathToGitIgnoreFile)
         {
             if (!File.Exists(pathToGitIgnoreFile))
             {
                 Trace.TraceWarning("warning: the .gitignore file specified '{0}' does not exist!", pathToGitIgnoreFile);
             }
+            _pathToGitIgnoreFile = pathToGitIgnoreFile;
             var gitTreeBuilder = new GitTreeBuilder(_repository.ObjectDatabase);
             gitTreeBuilder.Add(".gitignore", pathToGitIgnoreFile, LibGit2Sharp.Mode.NonExecutableFile);
             var tree = gitTreeBuilder.GetTree();
