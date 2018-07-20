@@ -14,15 +14,17 @@ namespace GitTfs.Core
         private readonly IChangeset _changeset;
         private readonly AuthorsFile _authors;
         private readonly string _cutPath;
+        private readonly bool _cutPathForce;
         public TfsChangesetInfo Summary { get; set; }
         public int BaseChangesetId { get; set; }
 
-        public TfsChangeset(ITfsHelper tfs, IChangeset changeset, AuthorsFile authors, string cutPath)
+        public TfsChangeset(ITfsHelper tfs, IChangeset changeset, AuthorsFile authors, string cutPath, bool cutPathForce)
         {
             _tfs = tfs;
             _changeset = changeset;
             _authors = authors;
             _cutPath = cutPath;
+            _cutPathForce = cutPathForce;
             BaseChangesetId = _changeset.Changes.Max(c => c.Item.ChangesetId) - 1;
         }
 
@@ -31,7 +33,7 @@ namespace GitTfs.Core
             if (initialTree.Empty())
                 Summary.Remote.Repository.GetObjects(lastCommit, initialTree);
             var remoteRelativeLocalPath = GetPathRelativeToWorkspaceLocalPath(workspace);
-            var resolver = new PathResolver(Summary.Remote, _cutPath, remoteRelativeLocalPath, initialTree);
+            var resolver = new PathResolver(Summary.Remote, _cutPath, _cutPathForce, remoteRelativeLocalPath, initialTree);
             var sieve = new ChangeSieve(_changeset, resolver);
             if (sieve.RenameBranchCommmit)
             {
@@ -124,7 +126,7 @@ namespace GitTfs.Core
         public IEnumerable<TfsTreeEntry> GetFullTree()
         {
             var treeInfo = Summary.Remote.Repository.CreateObjectsDictionary();
-            var resolver = new PathResolver(Summary.Remote, _cutPath, "", treeInfo);
+            var resolver = new PathResolver(Summary.Remote, _cutPath, _cutPathForce, "", treeInfo);
 
             IItem[] tfsItems;
             if (Summary.Remote.TfsRepositoryPath != null)

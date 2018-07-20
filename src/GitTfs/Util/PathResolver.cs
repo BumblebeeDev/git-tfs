@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using GitTfs.Core;
 
@@ -9,13 +10,15 @@ namespace GitTfs.Util
     {
         private readonly IGitTfsRemote _remote;
         private readonly string _cutPath;
+        private readonly bool _cutPathForce;
         private readonly string _relativePath;
         private readonly IDictionary<string, GitObject> _initialTree;
 
-        public PathResolver(IGitTfsRemote remote, string cutPath, string relativePath, IDictionary<string, GitObject> initialTree)
+        public PathResolver(IGitTfsRemote remote, string cutPath, bool cutPathForce, string relativePath, IDictionary<string, GitObject> initialTree)
         {
             _remote = remote;
             _cutPath = cutPath;
+            _cutPathForce = cutPathForce;
             _relativePath = relativePath;
             _initialTree = initialTree;
         }
@@ -34,13 +37,20 @@ namespace GitTfs.Util
             {
                 if (!pathInGitRepo.StartsWith(_cutPath) && pathInGitRepo != String.Empty)
                 {
-                    throw new GitTfsException("error: found path that does not start with '" + _cutPath + "' and cannot be rebased to the root of the repository: '" + pathInGitRepo + "'.", new[]
-                        {
-                            "Reconsider the use of the '--cut-path' option"
-                        }
-                    );
+                    if (!_cutPathForce)
+                    {
+                        throw new GitTfsException("error: found path that does not start with '" + _cutPath + "'" +
+                                                  " and cannot be rebased to the root of the repository: '" + pathInGitRepo + "'.", new[]
+                            {
+                                "Reconsider the use of the '--cut-path' option",
+                                "Specify '--cut-path-force' option to issue warnings in such cases instead of errors, leaving path of such files untouched",
+                            }
+                        );
+                    }
+                    Trace.TraceInformation("warning: found path that does not start with '" + _cutPath + "'" +
+                                           " and cannot be rebased to the root of the repository: '" + pathInGitRepo + "'.");
                 }
-                if (pathInGitRepo.StartsWith(_cutPath))
+                if (pathInGitRepo.StartsWith(_cutPath + "/", StringComparison.Ordinal) || pathInGitRepo.Equals(_cutPath, StringComparison.Ordinal))
                     pathInGitRepo = pathInGitRepo.Substring(_cutPath.Length);
                 while (pathInGitRepo.StartsWith("/"))
                     pathInGitRepo = pathInGitRepo.Substring(1);

@@ -22,6 +22,8 @@ namespace GitTfs.Commands
                         v => Password = v },
                     { "cut-path=", "Cut from the start of the TFS path",
                         v => CutPath = v },
+                    { "cut-path-force", "Do not stop with error if some path do not start with specified --cut-path",
+                        v => CutPathForce = (v != null) },
                 };
             }
         }
@@ -31,5 +33,6 @@ namespace GitTfs.Commands
         public string Username { get; set; }
         public string Password { get; set; }
         public string CutPath { get; set; }
+        public bool CutPathForce { get; set; }
     }
 }
