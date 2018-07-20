@@ -291,7 +291,7 @@ namespace GitTfs.VsCommon
 
                 if (tfsParentBranch == null)
                 {
-                    throw new GitTfsException("error : the branch you try to initialize '" + tfsPathBranchToCreate + "' is a root branch (e.g. has no parents).",
+                    throw new GitTfsException("error: the branch you try to initialize '" + tfsPathBranchToCreate + "' is a root branch (e.g. has no parents).",
                         new List<string> { "Clone this branch from Tfs instead of trying to initialize it!\n   Command: git tfs clone " + Url + " " + tfsPathBranchToCreate });
                 }
 
