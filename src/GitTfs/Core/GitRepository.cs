@@ -661,7 +661,7 @@ namespace GitTfs.Core
             if (owner.IsSubtree)
                 return Enumerable.Empty<IGitTfsRemote>();
 
-            return ReadAllTfsRemotes().Where(x => x.IsSubtree && string.Equals(x.OwningRemoteId, owner.Id, StringComparison.InvariantCultureIgnoreCase));
+            return ReadAllTfsRemotes().Where(x => x.IsSubtree && string.Equals(x.OwningRemoteId, owner.Id, StringComparison.Ordinal));
         }
 
         public void ResetRemote(IGitTfsRemote remoteToReset, string target)

@@ -217,7 +217,39 @@ namespace GitTfs.Commands
             else if (FetchAll)
                 remotesToFetch = _globals.Repository.ReadAllTfsRemotes();
             else
-                remotesToFetch = args.Select(arg => _globals.Repository.ReadTfsRemote(arg));
+            {
+                var allRemotes = _globals.Repository.ReadAllTfsRemotes().ToList();
+                var remotesList = new List<IGitTfsRemote>();
+                foreach (var arg in args)
+                {
+                    IGitTfsRemote remote;
+                    if (_globals.Repository.HasRemote(arg))
+                    {
+                        remote = _globals.Repository.ReadTfsRemote(arg);
+                    }
+                    else
+                    {
+                        // TFS representations of repository paths do not have trailing slashes
+                        var tfsBranchPath = (arg ?? string.Empty).TrimEnd('/');
+
+                        if (!tfsBranchPath.IsValidTfsPath())
+                        {
+                            var remotes = _globals.Repository.GetLastParentTfsCommits(tfsBranchPath);
+                            if (!remotes.Any())
+                            {
+                                throw new Exception("error: TFS branch not found: " + arg);
+                            }
+                            tfsBranchPath = remotes.First().Remote.TfsRepositoryPath;
+                        }
+                        tfsBranchPath.AssertValidTfsPath();
+
+                        remote = allRemotes.FirstOrDefault(r => String.Equals(r.TfsRepositoryPath, tfsBranchPath, StringComparison.OrdinalIgnoreCase));
+                    }
+                    remotesList.Add(remote);
+                }
+
+                remotesToFetch = remotesList;
+            }
             return remotesToFetch;
         }
     }

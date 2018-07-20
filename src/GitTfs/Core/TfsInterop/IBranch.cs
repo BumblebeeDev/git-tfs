@@ -51,7 +51,7 @@ namespace GitTfs.Core.TfsInterop
         public static BranchTree GetRootTfsBranchForRemotePath(this ITfsHelper tfs, string remoteTfsPath, bool searchExactPath = true)
         {
             var branches = tfs.GetBranches();
-            var branchTrees = branches.Aggregate(new Dictionary<string, BranchTree>(StringComparer.OrdinalIgnoreCase), (dict, branch) => dict.Tap(d => d.Add(branch.Path, new BranchTree(branch))));
+            var branchTrees = branches.Aggregate(new Dictionary<string, BranchTree>(StringComparer.Ordinal), (dict, branch) => dict.Tap(d => d.Add(branch.Path, new BranchTree(branch))));
             foreach (var branch in branchTrees.Values)
             {
                 if (!branch.IsRoot)
@@ -96,7 +96,7 @@ namespace GitTfs.Core.TfsInterop
         {
             if (branch == null) return Enumerable.Empty<BranchTree>();
 
-            if (string.Compare(branch.Path, tfsPath, StringComparison.InvariantCultureIgnoreCase) == 0)
+            if (string.Compare(branch.Path, tfsPath, StringComparison.Ordinal) == 0)
                 return branch.GetAllChildren();
 
             var childrenBranches = new List<BranchTree>();

@@ -284,7 +284,7 @@ namespace GitTfs.Core
 
             if (!IsSubtreeOwner)
             {
-                if (!tfsPath.StartsWith(TfsRepositoryPath, StringComparison.InvariantCultureIgnoreCase)) return null;
+                if (!tfsPath.StartsWith(TfsRepositoryPath, StringComparison.Ordinal)) return null;
                 if (TfsRepositoryPath == GitTfsConstants.TfsRoot)
                 {
                     tfsPath = tfsPath.Substring(TfsRepositoryPath.Length);
@@ -301,7 +301,7 @@ namespace GitTfs.Core
                 //look through the subtrees
                 var p = _globals.Repository.GetSubtrees(this)
                             .Where(x => x.IsSubtree)
-                            .FirstOrDefault(x => tfsPath.StartsWith(x.TfsRepositoryPath, StringComparison.InvariantCultureIgnoreCase)
+                            .FirstOrDefault(x => tfsPath.StartsWith(x.TfsRepositoryPath, StringComparison.Ordinal)
                                 && (tfsPath.Length == x.TfsRepositoryPath.Length || tfsPath[x.TfsRepositoryPath.Length] == '/'));
                 if (p == null) return null;
 
@@ -589,7 +589,7 @@ namespace GitTfs.Core
         {
             var tfsRemote = FindOrInitTfsRemoteOfChangeset(parentChangesetId, mergeChangeset, renameResult, out omittedParentBranch);
 
-            if (tfsRemote != null && string.Compare(tfsRemote.TfsRepositoryPath, TfsRepositoryPath, StringComparison.InvariantCultureIgnoreCase) != 0)
+            if (tfsRemote != null && string.Compare(tfsRemote.TfsRepositoryPath, TfsRepositoryPath, StringComparison.Ordinal) != 0)
             {
                 Trace.TraceInformation("\tFetching from dependent TFS remote '{0}'...", tfsRemote.Id);
                 try

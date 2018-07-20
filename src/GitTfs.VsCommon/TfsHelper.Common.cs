@@ -283,8 +283,16 @@ namespace GitTfs.VsCommon
                     Trace.WriteLine("Parameter about parent branch will be ignored because this version of TFS is able to find the parent!");
 
                 Trace.WriteLine("Looking to find branch '" + tfsPathBranchToCreate + "' in all TFS branches...");
+                // Get branch name with correct case
+                string tfsPathBranch;
+                if (!AllTfsBranches.TryGetValue(tfsPathBranchToCreate, out tfsPathBranch))
+                {
+                    throw new GitTfsException("error: TFS branches " + tfsPathBranchToCreate + " not found!");
+                }
+                tfsPathBranchToCreate = tfsPathBranch;
+                // Get parent branch name
                 string tfsParentBranch;
-                if (!AllTfsBranches.TryGetValue(tfsPathBranchToCreate, out tfsParentBranch))
+                if (!AllTfsBranchesParents.TryGetValue(tfsPathBranchToCreate, out tfsParentBranch))
                 {
                     throw new GitTfsException("error: TFS branches " + tfsPathBranchToCreate + " not found!");
                 }
@@ -443,19 +451,33 @@ namespace GitTfs.VsCommon
         }
 
         private IDictionary<string, string> _allTfsBranches;
+        private IDictionary<string, string> _allTfsBranchesParents;
         private IDictionary<string, string> AllTfsBranches
         {
             get
             {
-                if (_allTfsBranches != null)
-                    return _allTfsBranches;
-                Trace.WriteLine("Looking for all branches...");
-                _allTfsBranches = VersionControl.QueryRootBranchObjects(RecursionType.Full)
-                    .ToDictionary(b => b.Properties.RootItem.Item,
-                        b => b.Properties.ParentBranch != null ? b.Properties.ParentBranch.Item : null,
-                        (StringComparer.InvariantCultureIgnoreCase));
+                if (_allTfsBranches == null)
+                    GetAllBranchesInfo();
                 return _allTfsBranches;
             }
+        }
+        private IDictionary<string, string> AllTfsBranchesParents
+        {
+            get
+            {
+                if (_allTfsBranchesParents == null)
+                    GetAllBranchesInfo();
+                return _allTfsBranchesParents;
+            }
+        }
+        private void GetAllBranchesInfo()
+        {
+            Trace.WriteLine("Looking for all branches...");
+            _allTfsBranchesParents = VersionControl.QueryRootBranchObjects(RecursionType.Full)
+                .ToDictionary(b => b.Properties.RootItem.Item,
+                    b => b.Properties.ParentBranch != null ? b.Properties.ParentBranch.Item : null,
+                    StringComparer.Ordinal);
+            _allTfsBranches = _allTfsBranchesParents.ToDictionary(b => b.Key, b => b.Key, StringComparer.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -475,12 +497,12 @@ namespace GitTfs.VsCommon
         private int GetRelevantChangesetBasedOnChangeType(IEnumerable<MergeInfo> merges, string tfsPathParentBranch, string tfsPathBranchToCreate, out string renameFromBranch)
         {
             renameFromBranch = null;
-            var merge = merges.FirstOrDefault(m => m.SourceItem.Equals(tfsPathParentBranch, StringComparison.InvariantCultureIgnoreCase)
-                && !m.TargetItem.Equals(tfsPathParentBranch, StringComparison.InvariantCultureIgnoreCase));
+            var merge = merges.FirstOrDefault(m => m.SourceItem.Equals(tfsPathParentBranch, StringComparison.Ordinal)
+                && !m.TargetItem.Equals(tfsPathParentBranch, StringComparison.Ordinal));
 
             if (merge == null)
             {
-                merge = merges.FirstOrDefault(m => m.SourceItem.Equals(tfsPathBranchToCreate, StringComparison.InvariantCultureIgnoreCase)
+                merge = merges.FirstOrDefault(m => m.SourceItem.Equals(tfsPathBranchToCreate, StringComparison.Ordinal)
                     && (m.TargetChangeType.HasFlag(ChangeType.Rename) || m.TargetChangeType.HasFlag(ChangeType.SourceRename)));
                 if (merge == null)
                 {
@@ -498,7 +520,7 @@ namespace GitTfs.VsCommon
                 }
             }
 
-            if (merge.SourceItem.Equals(tfsPathBranchToCreate, StringComparison.InvariantCultureIgnoreCase)
+            if (merge.SourceItem.Equals(tfsPathBranchToCreate, StringComparison.Ordinal)
                 && (merge.TargetChangeType.HasFlag(ChangeType.Rename)
                 || merge.TargetChangeType.HasFlag(ChangeType.SourceRename)))
             {
@@ -507,7 +529,7 @@ namespace GitTfs.VsCommon
             else if (merge.SourceChangeType.HasFlag(ChangeType.Rename)
                  || merge.SourceChangeType.HasFlag(ChangeType.SourceRename))
             {
-                if (!merge.TargetItem.Equals(tfsPathBranchToCreate, StringComparison.InvariantCultureIgnoreCase))
+                if (!merge.TargetItem.Equals(tfsPathBranchToCreate, StringComparison.Ordinal))
                     renameFromBranch = merge.TargetItem;
                 else
                     merge.SourceChangeType = ChangeType.Merge;
