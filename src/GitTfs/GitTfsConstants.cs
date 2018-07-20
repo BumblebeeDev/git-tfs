@@ -62,11 +62,17 @@ namespace GitTfs
         public const string IgnoreNotInitBranches = GitTfsPrefix + ".ignore-not-init-branches";
 
         public const string BatchSize = GitTfsPrefix + ".batch-size";
-        public static string InitialChangeset = GitTfsPrefix + ".initial-changeset";
+
+        public const string InitialChangeset = GitTfsPrefix + ".initial-changeset";
+
+        public const string CutPath = GitTfsPrefix + ".cut-path";
+        public const string CutPathForce = GitTfsPrefix + ".cut-path-force";
+
         public static string MessageForceVersion = Environment.NewLine
             + "Note: If you want to force git-tfs to use another version of the tfs client library,"
             + Environment.NewLine
             + "set the environment variable `GIT_TFS_CLIENT` with the wished version (ie: '2013' for Visual Studio 2013,...)";
+
         public const string LogFileName = "git-tfs_log.txt";
     }
 }

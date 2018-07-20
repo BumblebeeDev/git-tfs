@@ -28,6 +28,8 @@ namespace GitTfs.Commands
                     {"bare", "Clone the TFS repository in a bare git repository", v => IsBare = v != null},
                     {"workspace=", "Set tfs workspace to a specific folder (a shorter path is better!)", v => WorkspacePath = v},
                     {"gitignore=", "Path toward the .gitignore file which be committed and used to ignore files", v => GitIgnorePath = v},
+                    { "cut-path=", "Cut from the start of the TFS path", v => CutPath = v },
+                    { "cut-path-force", "Do not stop with error if some path do not start with specified --cut-path", v => CutPathForce = (v != null) },
                 };
             }
         }
@@ -56,5 +58,7 @@ namespace GitTfs.Commands
         public string GitInitAutoCrlf { get; set; }
         public string GitInitIgnoreCase { get; set; }
         public string GitIgnorePath { get; set; }
+        public string CutPath { get; set; }
+        public bool CutPathForce { get; set; }
     }
 }

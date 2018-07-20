@@ -124,6 +124,12 @@ namespace GitTfs.Commands
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(_initOptions.CutPath))
+            {
+                _globals.Repository.SetConfig(GitTfsConstants.CutPath, _initOptions.CutPath);
+                _globals.Repository.SetConfig(GitTfsConstants.CutPathForce, _initOptions.CutPathForce.ToString());
+            }
+
             _globals.Repository.SetConfig(GitTfsConstants.IgnoreBranches, false.ToString());
         }
 

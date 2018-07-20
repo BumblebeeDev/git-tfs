@@ -29,15 +29,11 @@ namespace GitTfs.VsCommon
         private readonly IContainer _container;
         protected TfsTeamProjectCollection _server;
         private static bool _resolverInstalled;
-        private static string _cutPath;
-        private readonly bool _cutPathForce;
 
         public TfsHelperBase(TfsApiBridge bridge, IContainer container)
         {
             _bridge = bridge;
             _container = container;
-            _cutPath = container.GetInstance<RemoteOptions>().CutPath;
-            _cutPathForce = container.GetInstance<RemoteOptions>().CutPathForce;
             if (!_resolverInstalled)
             {
                 AppDomain.CurrentDomain.AssemblyResolve += LoadFromVsFolder;
@@ -640,7 +636,8 @@ namespace GitTfs.VsCommon
         {
             var tfsChangeset = _container.With<ITfsHelper>(this)
                 .With<IChangeset>(_bridge.Wrap<WrapperForChangeset, Changeset>(changeset))
-                .With("cutPath").EqualTo(_cutPath)
+                .With("cutPath").EqualTo(remote.Repository.GetConfig(GitTfsConstants.CutPath))
+                .With("cutPathForce").EqualTo(remote.Repository.GetConfig(GitTfsConstants.CutPathForce, false))
                 .GetInstance<TfsChangeset>();
             tfsChangeset.Summary = new TfsChangesetInfo { ChangesetId = changeset.ChangesetId, Remote = remote };
 
@@ -897,7 +894,7 @@ namespace GitTfs.VsCommon
                 _bridge.Wrap<WrapperForVersionControlServer, VersionControlServer>(VersionControl);
             // TODO - containerify this (no `new`)!
             var fakeChangeset = new Unshelveable(shelveset, change, wrapperForVersionControlServer, _bridge);
-            var tfsChangeset = new TfsChangeset(remote.Tfs, fakeChangeset, null, _cutPath, _cutPathForce) { Summary = new TfsChangesetInfo { Remote = remote } };
+            var tfsChangeset = new TfsChangeset(remote.Tfs, fakeChangeset, null, remote.Repository.GetConfig(GitTfsConstants.CutPath), remote.Repository.GetConfig(GitTfsConstants.CutPathForce, false)) { Summary = new TfsChangesetInfo { Remote = remote } };
             return tfsChangeset;
         }
 
