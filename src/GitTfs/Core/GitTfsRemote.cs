@@ -18,17 +18,19 @@ namespace GitTfs.Core
         private readonly Globals _globals;
         private readonly RemoteOptions _remoteOptions;
         private readonly ConfigProperties _properties;
+        private readonly BranchParentsFile _branchParents;
         private int? maxChangesetId;
         private string maxCommitHash;
         private bool isTfsAuthenticated;
         public RemoteInfo RemoteInfo { get; private set; }
 
         public GitTfsRemote(RemoteInfo info, IGitRepository repository, RemoteOptions remoteOptions, Globals globals,
-            ITfsHelper tfsHelper, ConfigProperties properties)
+            ITfsHelper tfsHelper, ConfigProperties properties, BranchParentsFile branchParents)
         {
             _remoteOptions = remoteOptions;
             _globals = globals;
             _properties = properties;
+            _branchParents = branchParents;
             Tfs = tfsHelper;
             Repository = repository;
 
@@ -1009,6 +1011,10 @@ namespace GitTfs.Core
             if (string.IsNullOrWhiteSpace(gitBranchName))
                 throw new GitTfsException("error: The Git branch name '" + gitBranchName + "' is not valid...\n");
             Trace.WriteLine("Git local branch will be: " + gitBranchName);
+
+            var branchParent = _branchParents.FindBranchParent(tfsRepositoryPath);
+            if (branchParent != null)
+                rootChangesetId = (int)branchParent;
 
             string sha1RootCommit = null;
             if (rootChangesetId != -1)

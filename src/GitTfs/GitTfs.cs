@@ -43,8 +43,10 @@ namespace GitTfs
             Trace.WriteLine("Command run:" + _globals.CommandLineRun);
             if (RequiresValidGitRepository(command)) AssertValidGitRepository();
             ParseAuthors();
+            ParseBranchParents();
             var result = Main(command, unparsedArgs);
             CopyAuthors();
+            CopyBranchParents();
             return result;
         }
 
@@ -119,6 +121,38 @@ namespace GitTfs
                     throw;
                 Trace.TraceWarning("warning: author file was not copied into Git directory due to a problem:\n\t" + ex.Message);
                 Trace.TraceWarning("         Copy the file manually to: " + Path.Combine(_globals.GitDir, AuthorsFile.GitTfsCachedAuthorsFileName));
+            }
+        }
+
+        private void ParseBranchParents()
+        {
+            try
+            {
+                _container.GetInstance<BranchParentsFile>().Parse(_globals.BranchParentsFilePath, _globals.GitDir);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Error when parsing branch parents file: " + ex);
+                if (!string.IsNullOrEmpty(_globals.BranchParentsFilePath))
+                    throw;
+                Trace.TraceWarning("warning: branch parents file ignored due to a problem occuring when reading it:\n\t" + ex.Message);
+                Trace.TraceWarning("         Verify the file: " + Path.Combine(_globals.GitDir, BranchParentsFile.GitTfsCachedBranchParentsFileName));
+            }
+        }
+
+        private void CopyBranchParents()
+        {
+            try
+            {
+                _container.GetInstance<BranchParentsFile>().CopyBranchParents(_globals.BranchParentsFilePath, _globals.GitDir);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("Error when copying branch parents file: " + ex);
+                if (!string.IsNullOrEmpty(_globals.BranchParentsFilePath))
+                    throw;
+                Trace.TraceWarning("warning: branch parents file was not copied into Git directory due to a problem:\n\t" + ex.Message);
+                Trace.TraceWarning("         Copy the file manually to: " + Path.Combine(_globals.GitDir, BranchParentsFile.GitTfsCachedBranchParentsFileName));
             }
         }
 
